@@ -1,0 +1,28 @@
+#lang racket
+
+(require parser-tools/yacc rackunit)
+(require "tokenizer.rkt")
+(require 
+  (prefix-in : parser-tools/lex-sre))
+
+(define jsonic-parse
+  (parser
+   (start start)
+   (tokens op-tokens mt-tokens)
+   (end EOF)
+   (error
+    (lambda (tok-ok? tok-name tok-value #:stack se)
+      (random)))
+   (grammar
+    (start [() #f]
+           [(jsonic-program) `((jsonic-program ,@$1))]) 
+    (jsonic-program
+     [(CHAR) `((jsonic-char ,$1))]
+     [(CHAR jsonic-program) `(,`(jsonic-char , $1) ,@$2)]
+     [(SEXP) `((jsonic-sexp ,@$1))]
+     [(SEXP jsonic-program) `(,`(jsonic-sexp ,@$1) ,@$2)]))))
+
+(provide (contract-out
+          [jsonic-parse (any/c . -> . list?)]))
+
+
